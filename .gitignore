@@ -40,3 +40,5 @@ components.d.ts
 package-lock.json
 android
 ios
+assets
+public/manifest.webmanifest
