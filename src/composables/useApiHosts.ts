@@ -5,7 +5,7 @@ import { useStore } from "@/stores";
 import { useLoggerStore } from "@/stores/logger";
 import { useDecryption } from "@/composables/useDecryption";
 import { useApiClient } from "@/composables/useApiClient";
-import { getRegionFromIP } from "@/service";
+import { getRegion } from "@/service";
 
 // 🔹 shared refs (one instance for whole app)
 const loading = ref(false);
@@ -25,7 +25,7 @@ async function postJsonNative(url: string) {
 async function fetchJsonNative(url: string) {
   const api = useApiClient();
   try {
-    const res = await api.get(url);
+    const res = await api.getCloud(url);
     return res ?? null;
   } catch {
     return null;
@@ -49,7 +49,7 @@ async function reportFailedDomain(host: string) {
   const domain = getDomainFromUrl(host);
   const accessTime = Math.floor(Date.now() / 1000);
   // Region: you can later make this dynamic (e.g. from store or device locale)
-  const region = await getRegionFromIP();
+  const region = await getRegion();
 
   const payload = {
     domain,
@@ -100,12 +100,14 @@ export function useApiHosts() {
       const raw = await postJsonNative(url);
 
       if (raw?.errcode == 0) {
+        console.warn(raw);
         logger.log(`✔ SUCCESS host: ${host}`);
         store.apiEndPoint = host;
         store.mainAds = raw.data?.advert;
-        await decryptImage(store.mainAds?.image);
-        store.baseImage64 = await blobUrlToBase64(decryptedImage.value);
-
+        if (raw.data?.advert) {
+          await decryptImage(store.mainAds?.image);
+          store.baseImage64 = await blobUrlToBase64(decryptedImage.value);
+        }
         const newHosts: string[] = Array.isArray(raw.data?.urls) ? raw.data.urls : [];
 
         const merged = new Set<string>();

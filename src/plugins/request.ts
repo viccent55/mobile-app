@@ -22,11 +22,9 @@ service.interceptors.request.use(
   (config) => {
     const store = useStore();
 
-    if (store.apiEndpoint) {
-      config.baseURL = store.apiEndpoint + "/apiv1";
+    if (store.apiEndPoint) {
+      config.baseURL = store.apiEndPoint + "/apiv1";
     }
-
-    appendToken(config);
 
     const client = "pwa";
     const timestamp = dayjs().unix();

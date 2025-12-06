@@ -1,3 +1,4 @@
+import { Device } from "@capacitor/device";
 
 /**
  * @description 打开页面
@@ -10,16 +11,29 @@ export function openPage(url: string) {
   }
 }
 
-export function getCurrentDomain(): string {
-  return window.location.origin;
-}
-export async function getRegionFromIP() {
+export async function getRegion() {
+  // 1) Try ipwhois first (very accurate)
+  try {
+    const res = await fetch("https://ipwho.is/");
+    const data = await res.json();
+    if (data?.country_code) return data.country_code.toUpperCase();
+  } catch {}
+
+  // 2) fallback ipapi
   try {
     const res = await fetch("https://ipapi.co/json/");
     const data = await res.json();
+    if (data?.country_code) return data.country_code.toUpperCase();
+  } catch {}
 
-    return data.country_code || "UNKNOWN"; // e.g. "US", "CN", "KH"
-  } catch {
-    return "UNKNOWN";
-  }
+  // 3) fallback device language
+  try {
+    const lang = await Device.getLanguageCode();
+    const locale = lang?.value ?? "";
+    const parts = locale.split("-");
+    if (parts.length === 2) return parts[1].toUpperCase();
+    return locale.toUpperCase();
+  } catch {}
+
+  return "UNKNOWN";
 }

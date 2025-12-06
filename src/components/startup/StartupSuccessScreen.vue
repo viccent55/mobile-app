@@ -1,16 +1,22 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import MainAds from "@/components/MainAds.vue";
+  import { ref } from "vue";
+  import MainAds from "@/components/MainAds.vue";
 
-const props = defineProps<{
-  apiEndpoint: string;
-}>();
+  const props = defineProps({
+    apiEndpoint: {
+      type: String,
+      default: () => "",
+    },
+    showWebview: {
+      type: Boolean,
+      default: () => false,
+    },
+  });
+  const showWebview = ref(props.showWebview);
 
-const showWebview = ref(false);
-
-function enterHome() {
-  showWebview.value = true;
-}
+  function enterHome() {
+    showWebview.value = true;
+  }
 </script>
 
 <template>
@@ -58,82 +64,83 @@ function enterHome() {
 </template>
 
 <style scoped lang="scss">
-.startup-screen {
-  position: fixed;
-  inset: 0;
-  background: black;
-  color: #fff;
-  z-index: 10;
-  overflow: hidden;
-}
-
-.startup-screen::before {
-  content: "";
-  position: absolute;
-  width: 220%;
-  height: 220%;
-  top: -60%;
-  left: -60%;
-  background: radial-gradient(circle at center, #2563eb33, transparent 60%);
-  opacity: 0.6;
-  animation: pulseGlow 4s ease-in-out infinite;
-  pointer-events: none;
-}
-
-@keyframes pulseGlow {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.4;
+  .startup-screen {
+    position: fixed;
+    inset: 0;
+    background: black;
+    color: #fff;
+    z-index: 10;
+    overflow: hidden;
   }
-  50% {
-    transform: scale(1.05);
-    opacity: 0.85;
+
+  .startup-screen::before {
+    content: "";
+    position: absolute;
+    width: 220%;
+    height: 220%;
+    top: -60%;
+    left: -60%;
+    background: radial-gradient(circle at center, #2563eb33, transparent 60%);
+    opacity: 0.6;
+    animation: pulseGlow 4s ease-in-out infinite;
+    pointer-events: none;
   }
-}
 
-.center-box {
-  position: relative;
-  height: 100%;
-  padding: 24px 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  text-align: center;
-}
+  @keyframes pulseGlow {
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 0.4;
+    }
+    50% {
+      transform: scale(1.05);
+      opacity: 0.85;
+    }
+  }
 
-.success-icon {
-  font-size: 42px;
-  margin-bottom: 8px;
-}
+  .center-box {
+    position: relative;
+    height: 100%;
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    text-align: center;
+  }
 
-.success-title {
-  font-size: 20px;
-  font-weight: 600;
-}
+  .success-icon {
+    font-size: 42px;
+    margin-bottom: 8px;
+  }
 
-.success-subtitle {
-  font-size: 13px;
-  opacity: 0.9;
-}
+  .success-title {
+    font-size: 20px;
+    font-weight: 600;
+  }
 
-/* iframe wrapper */
-.webview-wrapper {
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-}
+  .success-subtitle {
+    font-size: 13px;
+    opacity: 0.9;
+  }
 
-/* iframe fills the whole view, respects safe areas */
-.remote-webview {
-  width: 100%;
-  height: 100%;
-  border: none;
-  display: block;
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
-  box-sizing: border-box;
-}
+  /* iframe wrapper */
+  .webview-wrapper {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+  }
+
+  /* iframe fills the whole view, respects safe areas */
+  .remote-webview {
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    border: none;
+    display: block;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    box-sizing: border-box;
+  }
 </style>
