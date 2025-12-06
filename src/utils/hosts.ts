@@ -24,35 +24,29 @@ export function encryptData(data: string): string {
   });
 
   return (
-    CryptoJS.enc.Base64.stringify(iv) +
-    ":" +
-    encrypted.ciphertext.toString(CryptoJS.enc.Base64)
+    CryptoJS.enc.Base64.stringify(iv) + ":" + encrypted.ciphertext.toString(CryptoJS.enc.Base64)
   );
 }
 
 /**
  * Decrypt AES-256-CBC (PHP compatible)
  */
-export function decryptData(encryptedData: string): string | false {
+export function decryptData(encryptedData: string) {
   try {
     const [ivB64, ctB64] = encryptedData.split(":");
-    if (!ivB64 || !ctB64) return false;
+    if (!ivB64 || !ctB64) return "";
 
     const iv = CryptoJS.enc.Base64.parse(ivB64);
     const ciphertext = CryptoJS.enc.Base64.parse(ctB64);
 
-    const decrypted = CryptoJS.AES.decrypt(
-      { ciphertext },
-      keyWords,
-      {
-        iv,
-        mode: CryptoJS.mode.CBC,
-        padding: CryptoJS.pad.Pkcs7,
-      }
-    );
+    const decrypted = CryptoJS.AES.decrypt({ ciphertext }, keyWords, {
+      iv,
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7,
+    });
 
     return decrypted.toString(CryptoJS.enc.Utf8);
   } catch (e) {
-    return false;
+    return "";
   }
 }
