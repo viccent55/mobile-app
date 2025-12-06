@@ -42,7 +42,7 @@
 
 <template>
   <v-dialog
-    v-model="isShowModal"
+    v-model="model"
     persistent
     max-width="500"
     scrollable
