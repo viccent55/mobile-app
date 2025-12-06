@@ -1,12 +1,11 @@
 // composables/useApiHosts.ts
 import { ref } from "vue";
-import { CapacitorHttp } from "@capacitor/core";
 import { decryptData } from "@/utils/hosts";
 import { useStore } from "@/stores";
 import { useLoggerStore } from "@/stores/logger";
 import { useDecryption } from "@/composables/useDecryption";
-
-const TIMEOUT = 4000;
+import { useApiClient } from "@/composables/useApiClient";
+import { getRegionFromIP } from "@/service";
 
 // 🔹 shared refs (one instance for whole app)
 const loading = ref(false);
@@ -15,27 +14,57 @@ const failedClouds = ref<string[]>([]);
 
 // Native HTTP helper – returns ONLY res.data
 async function postJsonNative(url: string) {
+  const api = useApiClient();
   try {
-    const res = await CapacitorHttp.post({
-      url,
-      connectTimeout: TIMEOUT,
-      readTimeout: TIMEOUT,
-    });
-    return res.data ?? null;
+    const res = await api.post(url);
+    return res ?? null;
   } catch {
     return null;
   }
 }
 async function fetchJsonNative(url: string) {
+  const api = useApiClient();
   try {
-    const res = await CapacitorHttp.get({
-      url,
-      connectTimeout: TIMEOUT,
-      readTimeout: TIMEOUT,
-    });
-    return res.data ?? null;
+    const res = await api.get(url);
+    return res ?? null;
   } catch {
     return null;
+  }
+}
+
+// Extract hostname from full URL like "https://abc.com/path"
+function getDomainFromUrl(u: string): string {
+  try {
+    const url = new URL(u);
+    return url.hostname; // e.g. "example.com"
+  } catch {
+    // if u is not valid URL, just return raw string
+    return u;
+  }
+}
+
+// 🔹 report failed domain (fire-and-forget; don't break anything if it fails)
+async function reportFailedDomain(host: string) {
+  const api = useApiClient();
+  const domain = getDomainFromUrl(host);
+  const accessTime = Math.floor(Date.now() / 1000);
+  // Region: you can later make this dynamic (e.g. from store or device locale)
+  const region = await getRegionFromIP();
+
+  const payload = {
+    domain,
+    region,
+    access_time: accessTime,
+  };
+  try {
+    await api.post(`${import.meta.env.VITE_REPORT_API_DOMAIN}/apiv1/domain/log`, payload);
+    // Optional: use logger if you want
+    const logger = useLoggerStore();
+    logger.log(`📡 Reported failed domain: ${domain}`);
+  } catch (e) {
+    const logger = useLoggerStore();
+    console.log(e);
+    logger.log(`⚠ Failed to report domain: ${domain}`);
   }
 }
 
@@ -46,7 +75,6 @@ export function useApiHosts() {
 
   const isUrl = (u: string) =>
     typeof u === "string" && (u.startsWith("http://") || u.startsWith("https://"));
-
   const clean = (u: string) => u.replace(/\/+$/, "");
 
   // ---------------------------------------------------------------------
@@ -54,7 +82,6 @@ export function useApiHosts() {
   // ---------------------------------------------------------------------
   async function resolveApiHost() {
     logger.log("🔍 Starting direct API host check…");
-
     const list = [...store.hosts];
 
     for (const host of list) {
@@ -64,17 +91,21 @@ export function useApiHosts() {
         logger.log("✗ Invalid URL, skipping");
         failedHosts.value.push(host);
         store.hosts = store.hosts.filter((h) => h !== host);
+        // report invalid host domain as well (optional)
+        void reportFailedDomain(host);
         continue;
       }
 
       const url = clean(host) + "/apiv1/latest-redbook-conf";
       const raw = await postJsonNative(url);
+
       if (raw?.errcode == 0) {
         logger.log(`✔ SUCCESS host: ${host}`);
         store.apiEndPoint = host;
         store.mainAds = raw.data?.advert;
         await decryptImage(store.mainAds?.image);
         store.baseImage64 = await blobUrlToBase64(decryptedImage.value);
+
         const newHosts: string[] = Array.isArray(raw.data?.urls) ? raw.data.urls : [];
 
         const merged = new Set<string>();
@@ -89,15 +120,16 @@ export function useApiHosts() {
           if (!failedHosts.value.includes(old)) merged.add(clean(old));
         }
         store.hosts = Array.from(merged);
-
         logger.log(`✔ Updated host list: ${store.hosts.join(", ")}`);
-
         return host;
       }
 
       logger.log(`✗ Failed host: ${host}`);
       failedHosts.value.push(host);
       store.hosts = store.hosts.filter((h) => h !== host);
+
+      // 🔥 report this failed host domain
+      void reportFailedDomain(host);
     }
 
     logger.log("✗ All direct hosts failed.");
@@ -192,7 +224,6 @@ export function useApiHosts() {
       logger.log("✅ Host resolving finished (cloud fallback).");
       return cloud;
     } finally {
-      // 🔥 loading stays true until ALL logs / work are done
       loading.value = false;
     }
   }

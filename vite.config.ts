@@ -10,7 +10,9 @@ import vueDevTools from "vite-plugin-vue-devtools";
 const viteConfig = defineConfig((mode) => {
   const env = loadEnv(mode.mode, process.cwd());
   return {
-    
+    build: {
+      chunkSizeWarningLimit: 1000,
+    },
     plugins: [
       Vue({
         features: { propsDestructure: true },

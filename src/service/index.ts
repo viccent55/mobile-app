@@ -1,4 +1,3 @@
-// 资源获取、页面跳转、路由切换
 
 /**
  * @description 打开页面
@@ -13,4 +12,14 @@ export function openPage(url: string) {
 
 export function getCurrentDomain(): string {
   return window.location.origin;
+}
+export async function getRegionFromIP() {
+  try {
+    const res = await fetch("https://ipapi.co/json/");
+    const data = await res.json();
+
+    return data.country_code || "UNKNOWN"; // e.g. "US", "CN", "KH"
+  } catch {
+    return "UNKNOWN";
+  }
 }

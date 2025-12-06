@@ -1,11 +1,8 @@
 import axios, { type AxiosInstance } from "axios";
-import { appendToken } from "@/hooks/useJWT";
-import { encrypt, decrypt, makeSign } from "@/utils/crypto";
-import dayjs from "dayjs";
-import qs from "qs";
+import { encrypt, decrypt, makeSign, timestamp } from "@/utils/crypto";
 
+import qs from "qs";
 import { useStore } from "@/stores";
-import { Session } from "@/utils/storage";
 
 import { Notify } from "@/stores/notification";
 
@@ -27,15 +24,11 @@ service.interceptors.request.use(
     if (store.apiEndPoint) {
       config.baseURL = store.apiEndPoint + "/apiv1";
     }
-
-    appendToken(config);
     const client = "pwa";
-    const timestamp = dayjs().unix();
 
     if (config.data) {
       const encryptedData = encrypt(config.data);
-      const sign = makeSign(timestamp, encryptedData);
-
+      const sign = makeSign(timestamp(), encryptedData);
       config.data = {
         client,
         timestamp,
@@ -92,7 +85,6 @@ service.interceptors.response.use(
       Notify.error("网络连接错误");
     } else {
       if (error.status === 401) {
-        Session.clear(); // Clear all temporary browser caches
         window.location.reload();
         Notify.error("登录状态已过期，请重新登录");
       }

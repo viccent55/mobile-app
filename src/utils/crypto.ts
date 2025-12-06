@@ -1,5 +1,6 @@
 import CryptoJS from "crypto-js";
 import md5 from "crypto-js/md5";
+import dayjs from "dayjs";
 
 const SIGN_KEY = "super-secret-sign";
 const SECRET_KEY = "mHZ3LVwW8ukKEVvWM1dQi5cyP8pXHFpN"; // 32 chars
@@ -42,3 +43,8 @@ export function decrypt(ciphertext: string): any {
 export function makeSign(timestamp: number, encryptedData: string): string {
   return md5(`${timestamp}${encryptedData}${SIGN_KEY}`).toString();
 }
+
+export function timestamp() {
+  return dayjs().unix();
+}
+
