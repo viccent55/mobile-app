@@ -1,4 +1,5 @@
 import { Device } from "@capacitor/device";
+import { Browser } from "@capacitor/browser";
 
 /**
  * @description 打开页面
@@ -9,6 +10,9 @@ export function openPage(url: string) {
   if (!newWindow) {
     console.error("打开页面失败");
   }
+}
+export async function openBrowser(url: string) {
+  await Browser.open({ url: url });
 }
 
 export async function getRegion() {

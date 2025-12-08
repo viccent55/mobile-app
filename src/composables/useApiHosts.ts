@@ -77,12 +77,29 @@ export function useApiHosts() {
     typeof u === "string" && (u.startsWith("http://") || u.startsWith("https://"));
   const clean = (u: string) => u.replace(/\/+$/, "");
 
+  // Helper: check which frontend URL is alive
+  async function checkFrontendUrl(url: string): Promise<boolean> {
+    const testUrl = clean(url) + "/favicon.ico?_t=" + Date.now(); // avoid cache
+
+    try {
+      const res = await fetch(testUrl, {
+        method: "GET",
+      });
+
+      // treat 2xx/3xx as OK
+      return res.ok;
+    } catch (e) {
+      console.warn("checkFrontendUrl error:", e);
+      return false;
+    }
+  }
+
   // ---------------------------------------------------------------------
-  // 1. resolveApiHost – try store.hosts in order
+  // 1. resolveApiHost – try store.apiHosts in order
   // ---------------------------------------------------------------------
   async function resolveApiHost() {
     logger.log("🔍 Starting direct API host check…");
-    const list = [...store.hosts];
+    const list = [...store.apiHosts];
 
     for (const host of list) {
       logger.log(`→ Checking host: ${host}`);
@@ -90,8 +107,7 @@ export function useApiHosts() {
       if (!isUrl(host)) {
         logger.log("✗ Invalid URL, skipping");
         failedHosts.value.push(host);
-        store.hosts = store.hosts.filter((h) => h !== host);
-        // report invalid host domain as well (optional)
+        store.apiHosts = store.apiHosts.filter((h) => h !== host);
         void reportFailedDomain(host);
         continue;
       }
@@ -100,43 +116,103 @@ export function useApiHosts() {
       const raw = await postJsonNative(url);
 
       if (raw?.errcode == 0) {
-        console.warn(raw);
         logger.log(`✔ SUCCESS host: ${host}`);
-        store.apiEndPoint = host;
-        store.mainAds = raw.data?.advert;
-        if (raw.data?.advert) {
-          await decryptImage(store.mainAds?.image);
-          store.baseImage64 = await blobUrlToBase64(decryptedImage.value);
-        }
-        const newHosts: string[] = Array.isArray(raw.data?.urls) ? raw.data.urls : [];
+        console.log(raw.data);
 
-        const merged = new Set<string>();
-        // working host first
-        merged.add(host);
-        // new hosts from backend
-        for (const h of newHosts) {
-          if (typeof h === "string" && isUrl(h)) merged.add(clean(h));
+        // ✅ API endpoint: this is still your API base host
+        store.apiEndPoint = host;
+
+        // ✅ Ads decrypt (with detailed logs)
+        if (raw.data?.advert) {
+          logger.log("🟡 Advert data detected from API");
+
+          const newImage = raw.data.advert.image;
+          const oldImage = store.ads.image;
+          logger.log(`→ Old ad image: ${oldImage || "(empty)"}`);
+          logger.log(`→ New ad image: ${newImage || "(empty)"}`);
+          store.ads.image = newImage;
+          store.ads.position = raw.data.advert.position;
+          store.ads.url = raw.data.advert.url;
+          store.ads.name = raw.data.advert.name;
+          // ✅ only decrypt if image changed
+          if (newImage && newImage !== oldImage) {
+            logger.log("🔄 New ad image detected → start decrypting...");
+            await decryptImage(newImage);
+            logger.log("✅ Image decrypted successfully");
+            store.ads.base64 = await blobUrlToBase64(decryptedImage.value);
+            logger.log("✅ Image converted to Base64 and stored");
+          } else {
+            logger.log("⏭ No new ad image detected → skip decrypt & transform");
+          }
+        } else {
+          logger.log("⚪ No advert data returned from API");
         }
-        // old hosts that didn't fail
-        for (const old of store.hosts) {
-          if (!failedHosts.value.includes(old)) merged.add(clean(old));
+
+        // ✅ NEW: handle frontend URLs separately (do NOT mix with apiHosts)
+        const backendUrls: string[] = Array.isArray(raw.data?.urls) ? raw.data.urls : [];
+
+        // Filter + clean valid urls
+        const cleanedUrls = backendUrls
+          .filter((u) => typeof u === "string" && isUrl(u))
+          .map((u) => clean(u));
+
+        // Save all candidates
+        store.urls = cleanedUrls;
+
+        // 🔍 NEW: try all cleanedUrls until one works (favicon check)
+        let workingFront: string | null = null;
+
+        for (const front of cleanedUrls) {
+          logger.log(`→ Checking front URL: ${front}`);
+          const ok = await checkFrontendUrl(front);
+          if (ok) {
+            workingFront = front;
+            logger.log(`✔ Front URL OK: ${front}`);
+            break;
+          } else {
+            logger.log(`✗ Front URL failed: ${front}`);
+          }
         }
-        store.hosts = Array.from(merged);
-        logger.log(`✔ Updated host list: ${store.hosts.join(", ")}`);
+
+        // If none works, clear; else use the first working one
+        store.urlEndPoint = workingFront || "";
+        if (!workingFront) {
+          logger.log("✗ No working front URL found from config.");
+        } else {
+          logger.log(`✔ Using front URL: ${store.urlEndPoint}`);
+        }
+
+        // ✅ Keep apiHosts ONLY as API hosts (no mixing with urls)
+        const mergedApiHosts = new Set<string>();
+
+        // working API host first
+        mergedApiHosts.add(clean(host));
+
+        // old apiHosts that didn't fail
+        for (const old of store.apiHosts) {
+          if (!failedHosts.value.includes(old)) {
+            mergedApiHosts.add(clean(old));
+          }
+        }
+
+        store.apiHosts = Array.from(mergedApiHosts);
+        logger.log(`✔ Updated API host list: ${store.apiHosts.join(", ")}`);
+        logger.log(
+          `✔ Updated front URLs: ${store.urls.join(", ")} (urlEndPoint = ${store.urlEndPoint})`
+        );
+
         return host;
       }
 
       logger.log(`✗ Failed host: ${host}`);
       failedHosts.value.push(host);
-      store.hosts = store.hosts.filter((h) => h !== host);
-
-      // 🔥 report this failed host domain
+      store.apiHosts = store.apiHosts.filter((h) => h !== host);
       void reportFailedDomain(host);
     }
 
     logger.log("✗ All direct hosts failed.");
     store.apiEndPoint = "";
-    store.hosts = [];
+    store.apiHosts = [];
     return null;
   }
 
@@ -145,7 +221,7 @@ export function useApiHosts() {
   // ---------------------------------------------------------------------
   async function resolveCloudHost() {
     logger.log("☁ Starting cloud fallback…");
-    store.hosts = [];
+    store.apiHosts = [];
 
     for (const cloud of store.clouds) {
       const name = cloud.name;
@@ -186,7 +262,7 @@ export function useApiHosts() {
       }
 
       logger.log(`✔ Cloud ${name} decrypted ${hosts.length} hosts.`);
-      store.hosts = hosts;
+      store.apiHosts = hosts;
 
       logger.log("→ Testing decrypted hosts from cloud…");
       const working = await resolveApiHost();

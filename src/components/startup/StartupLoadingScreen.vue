@@ -1,6 +1,4 @@
 <script setup lang="ts">
-  import MainAds from "@/components/MainAds.vue";
-
   const props = defineProps<{
     loading: boolean;
     devModeEnabled: boolean;
@@ -30,9 +28,6 @@
       />
 
       <div class="loading-subtitle">正在为您寻找最快、最稳定的线路，请稍候…</div>
-
-      <!-- Main ads if any -->
-      <MainAds />
 
       <!-- Dev-only: show log dialog button -->
       <v-btn

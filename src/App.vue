@@ -8,6 +8,7 @@
   import StartupLoadingScreen from "@/components/startup/StartupLoadingScreen.vue";
   import StartupErrorScreen from "@/components/startup/StartupErrorScreen.vue";
   import StartupSuccessScreen from "@/components/startup/StartupSuccessScreen.vue";
+  import DailogBase64Ads from "@/components/DailogBase64Ads.vue";
 
   const store = useStore();
   const { initApiHosts, loading, failedHosts, failedClouds } = useApiHosts();
@@ -16,9 +17,9 @@
   const ready = ref(false);
   const errorMsg = ref<string | null>(null);
   const devModeEnabled = true;
-  const showResolverDialog = ref(false);
+  const showResolverDialog = ref(true);
 
-  const hasHost = computed(() => !!store.apiEndPoint);
+  const hasHost = computed(() => !!store.urlEndPoint);
 
   // consider "all failed" when ready + no host
   const allFailed = computed(
@@ -46,8 +47,9 @@
   function openResolverDialog() {
     showResolverDialog.value = true;
   }
-
+  const showAds = ref(false);
   onMounted(async () => {
+    showAds.value = true;
     await initHost();
     getFirstVisitInApp();
     runOncePerDay();
@@ -56,11 +58,6 @@
 
 <template>
   <v-app>
-    <HostResolverDialog
-      v-if="devModeEnabled"
-      v-model="showResolverDialog"
-    />
-
     <v-main>
       <!-- 1) Startup / loading screen while checking hosts -->
       <StartupLoadingScreen
@@ -81,10 +78,19 @@
 
       <!-- 3) Host success screen (success + enter / iframe webview) -->
       <StartupSuccessScreen
-        v-else
-        :api-endpoint="store.apiEndPoint"
+        v-if="store.urlEndPoint"
+        :url-end-point="store.urlEndPoint"
         :show-webview="true"
       />
     </v-main>
+    <HostResolverDialog
+      v-if="devModeEnabled"
+      v-model="showResolverDialog"
+    />
+    <!-- Main ads -->
+    <DailogBase64Ads
+      v-model="showAds"
+      :duration="5"
+    />
   </v-app>
 </template>

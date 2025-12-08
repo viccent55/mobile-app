@@ -1,9 +1,8 @@
 <script setup lang="ts">
   import { ref } from "vue";
-  import MainAds from "@/components/MainAds.vue";
 
   const props = defineProps({
-    apiEndpoint: {
+    urlEndPoint: {
       type: String,
       default: () => "",
     },
@@ -31,11 +30,8 @@
         <div class="success-title">线路检测完成</div>
         <div class="success-subtitle">
           已为您找到可用线路：
-          <span class="text-primary">{{ apiEndpoint }}</span>
+          <span class="text-primary">{{ urlEndPoint }}</span>
         </div>
-
-        <!-- Main ads -->
-        <MainAds />
 
         <v-btn
           color="primary"
@@ -56,7 +52,7 @@
     >
       <iframe
         class="remote-webview"
-        :src="apiEndpoint"
+        :src="urlEndPoint"
         frameborder="0"
       ></iframe>
     </div>

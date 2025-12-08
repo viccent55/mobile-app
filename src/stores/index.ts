@@ -4,8 +4,9 @@ export const useStore = defineStore("store", {
   state: () => {
     return {
       apiEndPoint: "",
-      hosts: ["https://test.xhsapi.sbs", "https://test.xhsapi.cyou"],
-
+      urlEndPoint: "",
+      apiHosts: ["https://test.xhsapi.sbs", "https://test.xhsapi.cyou"],
+      urls: <string[]>[],
       clouds: [
         {
           name: "worker",
@@ -29,7 +30,14 @@ export const useStore = defineStore("store", {
       darkMode: "light",
       configuration: <EmptyObjectType>{},
       chan: "",
-      mainAds: {} as EmptyObjectType,
+
+      ads: {
+        name: "",
+        image: "",
+        base64: "",
+        position: null as number | null,
+        url: "",
+      },
       baseImage64: "",
       isInstalled: false,
     };
