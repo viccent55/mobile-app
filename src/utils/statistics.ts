@@ -342,6 +342,7 @@ async function onStatistics(info: EmptyObjectType, type: string = "") {
     console.log("请求前的数据-body:", body);
     console.log("请求后端地址:", BACKEND_URL);
     logger.log(`⚠️ Checking API host: ${BACKEND_URL}/track/action`);
+    logger.log(`⚠️🟢 Param Request: ${tempData} VisitorId: ${VISITOR_ID}`);
     const res = await post(`${BACKEND_URL}/track/action`, body, {
       headers: headersData,
     });
