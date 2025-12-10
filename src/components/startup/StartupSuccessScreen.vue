@@ -23,6 +23,9 @@
     showWebview.value = true;
   }
 
+  // ✅ NO PARAMS — JUST PURE URL
+  const iframeSrc = computed(() => props.urlEndPoint);
+
   // ✅ Inject data into iframe window AFTER it loads
   function injectWindowKey() {
     if (!iframeRef.value?.contentWindow) return;
@@ -73,7 +76,7 @@
       <iframe
         ref="iframeRef"
         class="remote-webview"
-        :src="urlEndPoint"
+        :src="iframeSrc"
         frameborder="0"
         @load="injectWindowKey"
         allow="fullscreen; autoplay; encrypted-media; picture-in-picture"
