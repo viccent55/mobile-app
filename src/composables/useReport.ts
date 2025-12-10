@@ -3,17 +3,23 @@ import { setConfig } from "@/utils/statistics";
 
 export function useReport() {
   const isRunning = ref(false);
-  const store = useStore();
 
-  const KEY = "last_report_alive";
+  // ✅ Per-day key
+  const DAY_KEY = "last_report_alive";
+
+  // ✅ Lifetime key
+  const LIFETIME_KEY = "first_install_reported";
+
+  // -----------------------------
+  // ✅ Check if should run TODAY
+  // -----------------------------
   const shouldRunToday = () => {
-    const last = localStorage.getItem(KEY);
+    const last = localStorage.getItem(DAY_KEY);
     if (!last) return true;
 
     const lastDate = new Date(last);
     const now = new Date();
 
-    // Compare YYYY-MM-DD only
     return (
       lastDate.getFullYear() !== now.getFullYear() ||
       lastDate.getMonth() !== now.getMonth() ||
@@ -21,9 +27,12 @@ export function useReport() {
     );
   };
 
+  // -----------------------------
+  // ✅ Run ONCE PER DAY (active)
+  // -----------------------------
   const runOncePerDay = async () => {
-    if (isRunning.value) return; // prevent double-run
-    if (!shouldRunToday()) return; // already ran today
+    if (isRunning.value) return;
+    if (!shouldRunToday()) return;
 
     isRunning.value = true;
     try {
@@ -33,11 +42,11 @@ export function useReport() {
         backendURL: import.meta.env.VITE_TRANSACTION_API_BASE,
         promoCode: "Pim9FD",
         productCode: "xhslandpage",
-        actionType: "active",
-      }, 'active||alive');
+        actionType: "click",
+      });
 
-      // Save today's date
-      localStorage.setItem(KEY, new Date().toISOString());
+      // ✅ Save today's date
+      localStorage.setItem(DAY_KEY, new Date().toISOString());
     } catch (e) {
       console.error("setConfig failed:", e);
     } finally {
@@ -45,10 +54,18 @@ export function useReport() {
     }
   };
 
+  // -----------------------------
+  // ✅ Run ONLY ONCE IN LIFETIME (install)
+  // -----------------------------
   const getFirstVisitInApp = async () => {
-    if (store.isInstalled) return;
-    try {
+    const alreadyReported = localStorage.getItem(LIFETIME_KEY);
 
+    if (alreadyReported === "1") {
+      // ✅ Already reported once in lifetime → STOP
+      return;
+    }
+
+    try {
       await setConfig({
         appId: "1234567898765432100",
         productId: "xhslandpage",
@@ -56,11 +73,17 @@ export function useReport() {
         promoCode: "Pim9FD",
         productCode: "xhslandpage",
         actionType: "install",
-      }, 'install');
-      store.isInstalled = true;
+      });
+
+      // ✅ PERMANENTLY LOCK IT
+      localStorage.setItem(LIFETIME_KEY, "1");
     } catch (e) {
-      console.log(e);
+      console.error("first install report failed:", e);
     }
   };
-  return { runOncePerDay, getFirstVisitInApp };
+
+  return {
+    runOncePerDay, // ✅ daily active report
+    getFirstVisitInApp, // ✅ lifetime install report
+  };
 }

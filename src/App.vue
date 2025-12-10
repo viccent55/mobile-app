@@ -51,8 +51,8 @@
   onMounted(async () => {
     showAds.value = true;
     await initHost();
-    getFirstVisitInApp();
-    runOncePerDay();
+    await getFirstVisitInApp();
+    await runOncePerDay();
   });
 </script>
 

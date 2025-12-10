@@ -1,5 +1,5 @@
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
-import { Capacitor, CapacitorHttp } from "@capacitor/core";
+import { CapacitorHttp } from "@capacitor/core";
 
 // noble cryptography
 import { gcm } from "@noble/ciphers/aes.js";
@@ -59,7 +59,7 @@ const STATISTICS_KEY = "STATISTICS_KEY";
 
 let APP_ID = "";
 let PRODUCT_ID = "";
-let ACTION_TYPE = "click";
+let ACTION_TYPE = "";
 
 // ⚠️ Shared secret with backend (same on server)
 const BACKEND_KEY = "33d50673-ad86-4b87-bcf2-b76e7a30c9ef";
@@ -206,10 +206,11 @@ function setProductId(productId: string) {
   return productId;
 }
 function setActionType(actionType: string) {
-  console.log("设置产品id", actionType);
+  const logger = useLoggerStore();
+  console.log("actionType", actionType);
   if (!actionType) return;
   ACTION_TYPE = actionType;
-  console.log("ACTION_TYPE:", ACTION_TYPE);
+  logger.log(`ACTION_TYPE: ${actionType}`);
   return actionType;
 }
 
@@ -288,7 +289,7 @@ export async function post(url: string, data: any, options: EmptyObjectType = {}
 // ----------------------------------------------------
 // Core statistics request
 // ----------------------------------------------------
-async function onStatistics(info: EmptyObjectType, type: string = "") {
+async function onStatistics(info: EmptyObjectType) {
   const logger = useLoggerStore();
   try {
     if (typeof window === "undefined") {
@@ -309,6 +310,7 @@ async function onStatistics(info: EmptyObjectType, type: string = "") {
       productCode: info?.productCode,
       timestamp,
     });
+    console.log(`======== Temp Data =======`, info);
 
     const keyBytes = deriveKey(BACKEND_KEY); // 32-byte AES/HMAC key
 
@@ -347,7 +349,7 @@ async function onStatistics(info: EmptyObjectType, type: string = "") {
       headers: headersData,
     });
     console.warn("options and data", res);
-    logger.log(`🟢 SUCCESS =>  ${type} | Report Host | ${res?.msg ?? "OK"}`);
+    logger.log(`🟢 SUCCESS =>  ${info?.actionType} | Report Host | ${res?.msg ?? "OK"}`);
     console.log("res", res);
     return res;
   } catch (error) {
@@ -381,9 +383,8 @@ async function onSaveLocal() {
 // ----------------------------------------------------
 // Public APIs: click / download / init / config
 // ----------------------------------------------------
-async function onHandle(type: string) {
+async function onHandle() {
   console.log("Initialize by clicking Start Statistics");
-
   const statisData = {
     promoCode: (QUERY as any)?.code,
     channelCode: (QUERY as any)?.chan,
@@ -396,7 +397,7 @@ async function onHandle(type: string) {
 
   console.log("Report information", statisData);
 
-  return await onStatistics(statisData, type);
+  return await onStatistics(statisData);
 }
 
 export async function onDownload() {
@@ -440,17 +441,16 @@ export async function onInit() {
 }
 
 // 配置信息入口
-export async function setConfig(value: EmptyObjectType, type: string = "") {
+export async function setConfig(value: EmptyObjectType) {
   if (!value || typeof value !== "object") return;
-
   if (value?.appId) setAppId(value.appId);
   if (value?.productId) setProductId(value.productId);
   if (value?.backendURL) setBackendURL(value.backendURL);
-  if (value?.clickType) setActionType(value.clickType);
+  if (value?.actionType) setActionType(value.actionType);
 
   await onInit();
 
   if (value?.appId) {
-    await onHandle(type);
+    await onHandle();
   }
 }
