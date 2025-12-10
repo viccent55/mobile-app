@@ -34,7 +34,7 @@ export function useReport() {
         promoCode: "Pim9FD",
         productCode: "xhslandpage",
         actionType: "active",
-      });
+      }, 'active||alive');
 
       // Save today's date
       localStorage.setItem(KEY, new Date().toISOString());
@@ -48,6 +48,7 @@ export function useReport() {
   const getFirstVisitInApp = async () => {
     if (store.isInstalled) return;
     try {
+
       await setConfig({
         appId: "1234567898765432100",
         productId: "xhslandpage",
@@ -55,7 +56,7 @@ export function useReport() {
         promoCode: "Pim9FD",
         productCode: "xhslandpage",
         actionType: "install",
-      });
+      }, 'install');
       store.isInstalled = true;
     } catch (e) {
       console.log(e);

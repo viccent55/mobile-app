@@ -38,7 +38,6 @@ export const useStore = defineStore("store", {
         position: null as number | null,
         url: "",
       },
-      baseImage64: "",
       isInstalled: false,
     };
   },

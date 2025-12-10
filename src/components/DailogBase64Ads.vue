@@ -18,7 +18,7 @@
 
   // bind v-model to a computed so v-dialog can use it
   const showAd = computed({
-    get: () => props.modelValue,
+    get: () => (!store.ads.base64 ? false : props.modelValue),
     set: (val: boolean) => emit("update:modelValue", val),
   });
 
@@ -101,6 +101,7 @@
     persistent
     fullscreen
     transition="dialog-bottom-transition"
+    color="transparent"
   >
     <!-- Center wrapper -->
     <div class="ad-dialog-wrapper">
@@ -133,14 +134,15 @@
           </v-btn>
         </div>
 
-        <v-card-text class="ad-card-text">
+        <v-card-text class="pa-0">
           <!-- Ad image container -->
           <div
             class="ad-image-container"
             @click="handleClickAds"
           >
             <v-img
-              :src="store.ads.base64 || EmptyImage"
+              :src="store.ads.base64"
+              :lazy-src="store.ads.base64"
               alt="广告"
               class="ad-image"
               contain
@@ -183,13 +185,7 @@
   .ad-card {
     position: relative;
     width: 100%;
-    max-width: 380px;
-    background: radial-gradient(circle at top, #ffffff, #f0f0f0);
-  }
-
-  /* Space layout inside card */
-  .ad-card-text {
-    padding: 16px 16px 20px;
+    background: transparent;
   }
 
   /* Absolute close / countdown in top-right of card */
@@ -226,6 +222,7 @@
   .ad-image-container {
     width: 100%;
     max-height: 70vh;
+    min-height: 50vh;
     display: flex;
     justify-content: center;
     align-items: center;

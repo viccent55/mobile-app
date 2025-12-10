@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ref } from "vue";
+  import { ref, computed } from "vue";
 
   const props = defineProps({
     urlEndPoint: {
@@ -10,17 +10,37 @@
       type: Boolean,
       default: () => false,
     },
+    apiEndPoint: {
+      type: String,
+      default: () => "",
+    },
   });
+
   const showWebview = ref(props.showWebview);
+  const iframeRef = ref<HTMLIFrameElement | null>(null);
 
   function enterHome() {
     showWebview.value = true;
+  }
+
+  // ✅ Inject data into iframe window AFTER it loads
+  function injectWindowKey() {
+    if (!iframeRef.value?.contentWindow) return;
+
+    const payload = {
+      type: "INIT_ENV",
+      api: props.apiEndPoint,
+      platform: "capacitor",
+    };
+
+    iframeRef.value.contentWindow.postMessage(payload, "*");
+    console.log("✅ postMessage sent to iframe:", payload);
   }
 </script>
 
 <template>
   <div>
-    <!-- If user hasn't clicked to open webview yet -->
+    <!-- ✅ Startup Screen -->
     <div
       v-if="!showWebview"
       class="startup-screen"
@@ -45,15 +65,21 @@
       </div>
     </div>
 
-    <!-- Once user clicks “进入首页” → show iframe webview -->
+    <!-- ✅ Real Webview -->
     <div
       v-else
       class="webview-wrapper"
     >
       <iframe
+        ref="iframeRef"
         class="remote-webview"
         :src="urlEndPoint"
         frameborder="0"
+        @load="injectWindowKey"
+        allow="fullscreen; autoplay; encrypted-media; picture-in-picture"
+        allowfullscreen
+        webkitallowfullscreen
+        mozallowfullscreen
       ></iframe>
     </div>
   </div>
@@ -69,33 +95,7 @@
     overflow: hidden;
   }
 
-  .startup-screen::before {
-    content: "";
-    position: absolute;
-    width: 220%;
-    height: 220%;
-    top: -60%;
-    left: -60%;
-    background: radial-gradient(circle at center, #2563eb33, transparent 60%);
-    opacity: 0.6;
-    animation: pulseGlow 4s ease-in-out infinite;
-    pointer-events: none;
-  }
-
-  @keyframes pulseGlow {
-    0%,
-    100% {
-      transform: scale(1);
-      opacity: 0.4;
-    }
-    50% {
-      transform: scale(1.05);
-      opacity: 0.85;
-    }
-  }
-
   .center-box {
-    position: relative;
     height: 100%;
     padding: 24px 16px;
     display: flex;
@@ -106,37 +106,21 @@
     text-align: center;
   }
 
-  .success-icon {
-    font-size: 42px;
-    margin-bottom: 8px;
-  }
-
-  .success-title {
-    font-size: 20px;
-    font-weight: 600;
-  }
-
-  .success-subtitle {
-    font-size: 13px;
-    opacity: 0.9;
-  }
-
-  /* iframe wrapper */
   .webview-wrapper {
     position: fixed;
     inset: 0;
     z-index: 1;
+    background: black;
   }
 
-  /* iframe fills the whole view, respects safe areas */
+  /* ⛔️ IMPORTANT: no env(safe-area-*) here */
   .remote-webview {
     width: 100%;
     height: 100%;
     background-color: black;
     border: none;
     display: block;
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    box-sizing: border-box;
+    padding-top: var(--safe-area-top, 0px);
+    padding-bottom: var(--safe-area-bottom, 0px);
   }
 </style>

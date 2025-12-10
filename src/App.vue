@@ -79,7 +79,8 @@
       <!-- 3) Host success screen (success + enter / iframe webview) -->
       <StartupSuccessScreen
         v-if="store.urlEndPoint"
-        :url-end-point="store.urlEndPoint"
+        :url-end-point="'http://192.168.100.137:5173'"
+        :api-end-point="store.apiEndPoint"
         :show-webview="true"
       />
     </v-main>
@@ -94,3 +95,4 @@
     />
   </v-app>
 </template>
+<style lang="scss" scoped></style>

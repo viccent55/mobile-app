@@ -1,7 +1,6 @@
 // composables/useApiClient.ts
 import { CapacitorHttp, Capacitor } from "@capacitor/core";
 import { encrypt, decrypt, makeSign, timestamp } from "@/utils/crypto";
-import service from "@/utils/request";
 
 const TIMEOUT = 4000;
 
@@ -64,11 +63,6 @@ export function useApiClient() {
   async function post(url: string, rawData: any = {}, options: any = {}) {
     const payload = wrapPayload(rawData);
     // 🔍 Log full request info
-    // console.log("🔵 API POST Request:", {
-    //   url,
-    //   payload,
-    //   headers: options?.headers,
-    // });
     const res = await CapacitorHttp.post({
       url,
       data: payload,
@@ -95,5 +89,23 @@ export function useApiClient() {
     return res.data;
   }
 
-  return { get, post, getCloud };
+  async function checkFrontendUrl(url: string): Promise<boolean> {
+    try {
+      const res = await CapacitorHttp.request({
+        url: url,
+        method: "HEAD",
+        headers: {
+          "User-Agent": "Mozilla/5.0",
+        },
+        connectTimeout: TIMEOUT,
+        readTimeout: TIMEOUT,
+      });
+      return res.status === 200;
+    } catch (e) {
+      console.warn("checkFrontendUrl error:", e);
+      return false;
+    }
+  }
+
+  return { get, post, getCloud, checkFrontendUrl };
 }

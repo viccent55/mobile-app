@@ -79,15 +79,12 @@ export function useApiHosts() {
 
   // Helper: check which frontend URL is alive
   async function checkFrontendUrl(url: string): Promise<boolean> {
-    const testUrl = clean(url) + "/favicon.ico?_t=" + Date.now(); // avoid cache
+    const testUrl = clean(url);
+    const api = useApiClient();
 
     try {
-      const res = await fetch(testUrl, {
-        method: "GET",
-      });
-
-      // treat 2xx/3xx as OK
-      return res.ok;
+      const res = await api.checkFrontendUrl(testUrl);
+      return res;
     } catch (e) {
       console.warn("checkFrontendUrl error:", e);
       return false;

@@ -259,11 +259,11 @@ function setBackendURL(str: string) {
 // ----------------------------------------------------
 // POST helper
 // ----------------------------------------------------
-async function post(url: string, data: any, options: EmptyObjectType = {}) {
-  const isNative = Capacitor.isNativePlatform();
+export async function post(url: string, data: any, options: EmptyObjectType = {}) {
+  const logger = useLoggerStore();
   const timeout = (options as any)?.timeout || 5000;
 
-  if (isNative) {
+  try {
     const res = await CapacitorHttp.post({
       url,
       data,
@@ -274,39 +274,22 @@ async function post(url: string, data: any, options: EmptyObjectType = {}) {
       connectTimeout: timeout,
       readTimeout: timeout,
     });
-    console.error(res);
+    if (res.status < 200 || res.status >= 300) {
+      // non-2xx: throw so caller can handle
+      throw new Error(`HTTP ${res.status}`);
+    }
     return res.data;
-  }
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      mode: "cors",
-      headers: {
-        "Content-Type": "application/json",
-        ...options?.headers,
-      },
-      body: JSON.stringify(data),
-      signal: controller.signal,
-    });
-
-    if (!res.ok) throw new Error("请求失败");
-    return res.json();
-  } catch (err: any) {
-    if (err.name === "AbortError") console.error("请求超时");
+  } catch (err) {
+    logger.log(`🚨 ERROR Report host: ${String(err)}`);
     throw err;
-  } finally {
-    clearTimeout(timeoutId);
   }
 }
 
 // ----------------------------------------------------
 // Core statistics request
 // ----------------------------------------------------
-async function onStatistics(info: EmptyObjectType) {
+async function onStatistics(info: EmptyObjectType, type: string = "") {
+  const logger = useLoggerStore();
   try {
     if (typeof window === "undefined") {
       console.warn("onStatistics in non-browser env, skip");
@@ -358,11 +341,12 @@ async function onStatistics(info: EmptyObjectType) {
     console.log("headersData:", headersData);
     console.log("请求前的数据-body:", body);
     console.log("请求后端地址:", BACKEND_URL);
-
+    logger.log(`⚠️ Checking API host: ${BACKEND_URL}/track/action`);
     const res = await post(`${BACKEND_URL}/track/action`, body, {
       headers: headersData,
     });
-
+    console.warn("options and data", res);
+    logger.log(`🟢 SUCCESS =>  ${type} | Report Host | ${res?.msg ?? "OK"}`);
     console.log("res", res);
     return res;
   } catch (error) {
@@ -396,7 +380,7 @@ async function onSaveLocal() {
 // ----------------------------------------------------
 // Public APIs: click / download / init / config
 // ----------------------------------------------------
-async function onHandle() {
+async function onHandle(type: string) {
   console.log("Initialize by clicking Start Statistics");
 
   const statisData = {
@@ -410,7 +394,8 @@ async function onHandle() {
   };
 
   console.log("Report information", statisData);
-  return await onStatistics(statisData);
+
+  return await onStatistics(statisData, type);
 }
 
 export async function onDownload() {
@@ -454,7 +439,7 @@ export async function onInit() {
 }
 
 // 配置信息入口
-export async function setConfig(value: EmptyObjectType) {
+export async function setConfig(value: EmptyObjectType, type: string = "") {
   if (!value || typeof value !== "object") return;
 
   if (value?.appId) setAppId(value.appId);
@@ -465,6 +450,6 @@ export async function setConfig(value: EmptyObjectType) {
   await onInit();
 
   if (value?.appId) {
-    await onHandle();
+    await onHandle(type);
   }
 }
