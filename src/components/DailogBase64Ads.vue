@@ -148,23 +148,6 @@
               contain
             />
           </div>
-
-          <!-- Bottom area: optional text / CTA -->
-          <div class="ad-bottom">
-            <div class="ad-title">精选推荐</div>
-            <div class="ad-subtitle">点击广告了解更多精彩内容～</div>
-
-            <!-- Backup close button if you want text close too -->
-            <v-btn
-              v-if="canClose"
-              class="mt-2"
-              block
-              variant="text"
-              @click="closeAd"
-            >
-              关闭广告
-            </v-btn>
-          </div>
         </v-card-text>
       </v-card>
     </div>
@@ -227,7 +210,7 @@
     justify-content: center;
     align-items: center;
     overflow: hidden;
-    border-radius: 18px;
+    border-radius: 12px;
   }
 
   /* v-img itself */
