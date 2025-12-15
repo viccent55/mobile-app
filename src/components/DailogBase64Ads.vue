@@ -2,11 +2,11 @@
   import { ref, watch, onBeforeUnmount, computed } from "vue";
   import { useStore } from "@/stores";
   import { openBrowser } from "@/service/index";
-  import EmptyImage from "@/assets/loading.jpg";
 
   const props = defineProps<{
     modelValue: boolean; // for v-model
     duration?: number; // seconds to lock close button
+    autoClose?: boolean;
   }>();
 
   const emit = defineEmits<{
@@ -37,11 +37,15 @@
     clearTimer();
 
     const total = props.duration ?? 5;
+    const autoClose = props.autoClose ?? false;
 
     if (total <= 0) {
-      // no countdown, allow immediate close
       canClose.value = true;
       remaining.value = 0;
+
+      if (autoClose) {
+        showAd.value = false;
+      }
       return;
     }
 
@@ -56,6 +60,11 @@
       if (count <= 0) {
         clearTimer();
         canClose.value = true;
+
+        // ✅ AUTO CLOSE if enabled
+        if (autoClose) {
+          showAd.value = false;
+        }
       }
     }, 1000);
   }
@@ -87,7 +96,6 @@
   function handleClickAds() {
     const url = store.ads.url || null;
     emit("click-ad", url);
-
     if (url) {
       openBrowser(url);
     }
@@ -95,99 +103,85 @@
 </script>
 
 <template>
-  <!-- FULLSCREEN DIALOG (BLOCKS PAGE) -->
   <v-dialog
     v-model="showAd"
     persistent
     fullscreen
-    transition="dialog-bottom-transition"
-    color="transparent"
+    scrim="black"
   >
-    <!-- Center wrapper -->
-    <div class="ad-dialog-wrapper">
-      <v-card
-        class="ad-card"
-        elevation="10"
-        rounded="xl"
-      >
-        <!-- Close / countdown in corner -->
-        <div class="ad-close-wrapper">
-          <!-- Show countdown chip first -->
-          <div
-            v-if="!canClose"
-            class="ad-countdown"
-          >
-            {{ remaining }}s
-          </div>
+    <!-- Fullscreen wrapper -->
+    <v-card class="ad-full">
+      <!-- Close / countdown -->
+      <div class="ad-close-wrapper">
+        <v-chip
+          v-if="!canClose"
+          rounded="full"
+          color="primary"
+          variant="text"
+          density="comfortable"
+          elevation="1"
+        >
+          广告倒计时：{{ remaining }}s
+        </v-chip>
 
-          <!-- Show close button after duration seconds -->
-          <v-btn
-            v-else
-            icon
-            size="small"
-            variant="flat"
-            color="black"
-            class="ad-close-btn"
-            @click="closeAd"
-          >
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-        </div>
+        <v-btn
+          v-else
+          icon
+          variant="flat"
+          class="ad-close-btn"
+          @click="closeAd"
+          density="comfortable"
+        >
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+      </div>
 
-        <v-card-text class="pa-0">
-          <!-- Ad image container -->
-          <div
-            class="ad-image-container"
-            @click="handleClickAds"
-          >
-            <v-img
-              :src="store.ads.base64"
-              :lazy-src="store.ads.base64"
-              alt="广告"
-              class="ad-image"
-              contain
-            />
-          </div>
-        </v-card-text>
-      </v-card>
-    </div>
+      <!-- Fullscreen image -->
+      <v-img
+        class="ad-img"
+        :src="store.ads.base64"
+        :lazy-src="store.ads.base64"
+        alt="广告"
+        cover
+        @click="handleClickAds"
+      />
+    </v-card>
   </v-dialog>
 </template>
-
 <style scoped lang="scss">
-  .ad-dialog-wrapper {
-    min-height: 100vh;
+  .ad-full {
+    position: fixed;
+    inset: 0;
     width: 100vw;
-    padding: 16px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    height: 100dvh; /* best for mobile */
+    background: #000;
+    border-radius: 0;
+    overflow: hidden;
   }
 
-  /* Card stays in the center, with max width – looks good on phone */
-  .ad-card {
-    position: relative;
-    width: 100%;
-    background: transparent;
+  /* v-img must fill the whole screen */
+  .ad-img {
+    width: 100vw;
+    height: 100dvh;
   }
 
-  /* Absolute close / countdown in top-right of card */
+  /* keep close button in safe-area */
   .ad-close-wrapper {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 2;
+    position: fixed;
+    top: calc(env(safe-area-inset-top) + 10px);
+    right: calc(env(safe-area-inset-right) + 15px);
+    z-index: 10;
     display: flex;
     align-items: center;
+    justify-content: flex-end;
   }
 
-  /* Countdown pill while waiting */
   .ad-countdown {
-    min-width: 32px;
+    min-width: 40px;
     height: 32px;
-    padding: 0 8px;
+    padding: 0 10px;
     border-radius: 999px;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.75);
     color: #fff;
     font-size: 14px;
     display: flex;
@@ -195,56 +189,8 @@
     align-items: center;
   }
 
-  /* Close button style (after canClose=true) */
   .ad-close-btn {
-    background: #ffffff;
+    background: rgba(255, 255, 255, 0.9);
     border-radius: 999px;
-  }
-
-  /* Container for the image – centers any image size */
-  .ad-image-container {
-    width: 100%;
-    max-height: 70vh;
-    min-height: 50vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-    border-radius: 12px;
-  }
-
-  /* v-img itself */
-  .ad-image {
-    width: 100%;
-    max-height: 70vh;
-    border-radius: 18px;
-  }
-
-  /* Bottom text area */
-  .ad-bottom {
-    margin-top: 12px;
-    text-align: center;
-  }
-
-  .ad-title {
-    font-weight: 700;
-    font-size: 16px;
-  }
-
-  .ad-subtitle {
-    margin-top: 4px;
-    font-size: 13px;
-    opacity: 0.7;
-  }
-
-  /* Small tweak for very small phones */
-  @media (max-height: 600px) {
-    .ad-dialog-wrapper {
-      align-items: flex-start;
-    }
-
-    .ad-card {
-      margin-top: 24px;
-    }
   }
 </style>

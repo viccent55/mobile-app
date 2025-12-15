@@ -114,7 +114,7 @@ export function useApiHosts() {
 
       if (raw?.errcode == 0) {
         logger.log(`✔ SUCCESS host: ${host}`);
-        console.log(raw.data);
+        console.log('success return data', raw.data);
 
         // ✅ API endpoint: this is still your API base host
         store.apiEndPoint = host;
