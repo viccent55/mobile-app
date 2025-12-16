@@ -92,14 +92,17 @@ export function useApiClient() {
   async function checkFrontendUrl(url: string): Promise<boolean> {
     try {
       const res = await CapacitorHttp.request({
-        url: url,
-        method: "HEAD",
+        url: `${url.replace(/\/$/, "")}/ping.txt`,
+        method: "GET",
         headers: {
           "User-Agent": "Mozilla/5.0",
+          "Cache-Control": "no-cache",
         },
         connectTimeout: TIMEOUT,
         readTimeout: TIMEOUT,
       });
+      console.warn("res", res);
+
       return res.status === 200;
     } catch (e) {
       console.warn("checkFrontendUrl error:", e);
