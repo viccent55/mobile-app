@@ -30,7 +30,7 @@ export function useReport() {
   // -----------------------------
   // ✅ Run ONCE PER DAY (active)
   // -----------------------------
-  const runOncePerDay = async () => {
+  const runOncePerDay = async (appChannel: string = "") => {
     if (isRunning.value) return;
     if (!shouldRunToday()) return;
 
@@ -40,7 +40,7 @@ export function useReport() {
         appId: "1234567898765432100",
         productId: "xhslandpage",
         backendURL: import.meta.env.VITE_TRANSACTION_API_BASE,
-        promoCode: "Pim9FD",
+        promoCode: appChannel,
         productCode: "xhslandpage",
         actionType: "click",
       });
@@ -57,7 +57,7 @@ export function useReport() {
   // -----------------------------
   // ✅ Run ONLY ONCE IN LIFETIME (install)
   // -----------------------------
-  const getFirstVisitInApp = async () => {
+  const getFirstVisitInApp = async (appChannel: string = "") => {
     const alreadyReported = localStorage.getItem(LIFETIME_KEY);
 
     if (alreadyReported === "1") {
@@ -70,7 +70,7 @@ export function useReport() {
         appId: "1234567898765432100",
         productId: "xhslandpage",
         backendURL: import.meta.env.VITE_TRANSACTION_API_BASE,
-        promoCode: "Pim9FD",
+        promoCode: appChannel,
         productCode: "xhslandpage",
         actionType: "install",
       });
@@ -83,7 +83,7 @@ export function useReport() {
   };
 
   return {
-    runOncePerDay, // ✅ daily active report
-    getFirstVisitInApp, // ✅ lifetime install report
+    runOncePerDay,
+    getFirstVisitInApp,
   };
 }

@@ -9,14 +9,16 @@
   import StartupErrorScreen from "@/components/startup/StartupErrorScreen.vue";
   import StartupSuccessScreen from "@/components/startup/StartupSuccessScreen.vue";
   import DailogBase64Ads from "@/components/DailogBase64Ads.vue";
+  import { useChannel } from "./composables/useChannel";
 
   const store = useStore();
   const { initApiHosts, loading, failedHosts, failedClouds } = useApiHosts();
   const { runOncePerDay, getFirstVisitInApp } = useReport();
+  const { getChannel, appChannel } = useChannel();
 
   const ready = ref(false);
   const errorMsg = ref<string | null>(null);
-  const devModeEnabled = true;
+  const devModeEnabled = false;
   const showResolverDialog = ref(true);
 
   const hasHost = computed(() => !!store.urlEndPoint);
@@ -50,18 +52,27 @@
   const showAds = ref(false);
   onMounted(async () => {
     showAds.value = true;
+    const channel = await getChannel();
+    console.warn("[APP] channel:", channel);
+
     await initHost();
-    await getFirstVisitInApp();
-    await runOncePerDay();
+    await getFirstVisitInApp(channel);
+    await runOncePerDay(channel);
   });
 </script>
 
 <template>
   <v-app>
     <v-main>
+      <DailogBase64Ads
+        :appChannel="appChannel"
+        v-model="showAds"
+        :duration="5"
+        auto-close
+      />
       <!-- 1) Startup / loading screen while checking hosts -->
       <StartupLoadingScreen
-        v-if="!ready"
+        v-if="!store.ads.base64 && !ready"
         :loading="loading"
         :dev-mode-enabled="devModeEnabled"
         @open-dev-log="openResolverDialog"
@@ -69,7 +80,7 @@
 
       <!-- 2) Error screen if no host (all direct + clouds failed) -->
       <StartupErrorScreen
-        v-else-if="!hasHost"
+        v-else-if="!hasHost && !loading"
         :error-msg="errorMsg"
         :all-failed="allFailed"
         :dev-mode-enabled="devModeEnabled"
@@ -87,11 +98,6 @@
     <HostResolverDialog
       v-if="devModeEnabled"
       v-model="showResolverDialog"
-    />
-    <!-- Main ads -->
-    <DailogBase64Ads
-      v-model="showAds"
-      :duration="5"
     />
   </v-app>
 </template>

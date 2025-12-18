@@ -221,7 +221,6 @@ async function onStatistics(info: EmptyObjectType) {
       productCode: info?.productCode,
       timestamp,
     });
-    console.log("⚠️Sending Request:", tempData);
     const keyBytes = deriveKey(BACKEND_KEY);
     const cipherBytes = encryptAesGcm(tempData, keyBytes, nonceBytes);
     const dataBase64 = bytesToBase64(cipherBytes);

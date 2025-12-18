@@ -7,6 +7,7 @@
     modelValue: boolean; // for v-model
     duration?: number; // seconds to lock close button
     autoClose?: boolean;
+    appChannel: string;
   }>();
 
   const emit = defineEmits<{
@@ -145,6 +146,18 @@
         cover
         @click="handleClickAds"
       />
+      <div class="app-channel-info">
+        <v-chip
+          v-if="!canClose"
+          rounded="full"
+          color="primary"
+          variant="text"
+          density="comfortable"
+          elevation="1"
+        >
+          {{ appChannel }}
+        </v-chip>
+      </div>
     </v-card>
   </v-dialog>
 </template>
@@ -192,5 +205,11 @@
   .ad-close-btn {
     background: rgba(255, 255, 255, 0.9);
     border-radius: 999px;
+  }
+  .app-channel-info {
+    position: absolute;
+    bottom: calc(env(safe-area-inset-bottom) + 10px);
+    right: 0px;
+    z-index: 10;
   }
 </style>
