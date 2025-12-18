@@ -1,54 +1,124 @@
-# mobile-app
+# Capacitor (Android) – Vue 3 Quick Start
 
-This template should help get you started developing with Vue 3 in Vite.
+This project is a **Vue 3 application wrapped with Capacitor** to run as a **native Android app**.
 
-## Recommended IDE Setup
+Capacitor loads your built Vue app into a native Android WebView, allowing you to access native APIs while keeping a web-based codebase.
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+---
 
-## Recommended Browser Setup
+## Requirements
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd) 
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+### Node.js
 
-## Type Support for `.vue` Imports in TS
+- **Node.js 20+** (recommended)
+- Check version:
+  ```bash
+  node -v
+  ```
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+Android Studio
 
-## Customize configuration
+Install Android Studio
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+Includes:
 
-## Project Setup
+Android SDK
 
-```sh
-npm install
+Platform tools
+
+Emulator
+
+Required for building and running Android apps
+
+Java (JDK) for Android Builds
+
+Gradle and the Android Gradle Plugin require a supported JDK.
+
+✅ Recommended JDK
+
+Temurin JDK 21 (best choice for modern Android projects)
+
+Temurin JDK 17 (also supported and stable)
+
+⚠️ About JBR (JetBrains Runtime)
+
+Android Studio includes JBR
+
+JBR may work inside Android Studio
+
+❌ Not reliable for CLI builds (./gradlew, npx cap run android)
+
+If you see errors like:
+
+```
+  brew install --cask temurin@21
+  Or install JDK 17:
+  brew install --cask temurin@17
+
+  Verify installed JDKs
+  /usr/libexec/java_home -V
+
+  Force Gradle to use the correct JDK (recommended)
+  android/gradle.properties
+
+  //android/gradle.properties
+  org.gradle.java.home=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home
+
+  cd android
+  ./gradlew -version
+
 ```
 
-### Compile and Hot-Reload for Development
-
-```sh
-npm run dev
 ```
+  1) Install Project Dependencies
 
-### Type-Check, Compile and Minify for Production
+    npm install
+    npm run dev
+    npm run build
 
-```sh
-npm run build
-```
+  2) Install Capacitor ( Optional this is already have in package.json) 
+      npm i @capacitor/core @capacitor/cli
+      npx cap init
 
-### Run Unit Tests with [Vitest](https://vitest.dev/)
+  3) Add Android Platform
+      npx cap add androind 
+      npm run build &&  npx cap sync android
 
-```sh
-npm run test:unit
-```
+  4) Open Android Studio
+      npx cap open android
 
-### Lint with [ESLint](https://eslint.org/)
+  5) Run on Android Device or Emulator
+      Option A: Android Studio
+      Select a device or emulator
 
-```sh
-npm run lint
+      Click ▶ Run
+      npx cap run android
+
+      Common Workflow
+
+      # Build web app
+      npm run build
+
+      # Sync web assets to Android
+      npx cap sync android
+
+      # Run on device
+      npx cap run android
+
+      Useful Commands
+
+      # Sync web build → native
+
+      npm run build
+      npx cap sync
+
+      # Open Android Studio
+      npx cap open android
+
+      # Run on Android
+      npx cap run android
+
+      # Verify Gradle Java version
+      cd android && ./gradlew -version
+
 ```

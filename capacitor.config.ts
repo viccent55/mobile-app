@@ -2,23 +2,20 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: "com.example.app",
-  appName: "redbook",
+  appId: "horse.panda.com",
+  appName: "xhs",
   webDir: "dist",
   server: {
-    // url: "http://192.168.100.137:5173",
+    // url: "http://192.168.100.137:5174",
     cleartext: true, // no dynamic url here
   },
   plugins: {
     SplashScreen: {
       launchShowDuration: 2500,
       launchAutoHide: true,
-      backgroundColor: "#ffffffff",
-      androidSplashResourceName: "splash",
-      splashFullScreen: true,
-      splashImmersive: true,
+      backgroundColor: "#ffffff",
       androidScaleType: "CENTER_CROP",
-      showSpinner: true,
+      showSpinner: false,
     },
     StatusBar: {
       style: "DARK",
