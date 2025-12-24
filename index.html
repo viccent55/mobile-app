@@ -13,6 +13,29 @@
 
 <body>
   <div id="app"></div>
+  <style>
+    #boot-splash {
+      position: fixed;
+      inset: 0;
+      z-index: 999999;
+      background: #ffffff;
+      display: grid;
+      place-items: center;
+    }
+
+    #boot-splash .logo {
+      width: 96px;
+      height: 96px;
+      background: url("/assets/icon.png") center/contain no-repeat;
+      opacity: .95;
+    }
+
+    .boot-hide {
+      opacity: 0;
+      transition: opacity 180ms ease;
+      pointer-events: none;
+    }
+  </style>
   <script type="module" src="/src/main.ts"></script>
 </body>
 

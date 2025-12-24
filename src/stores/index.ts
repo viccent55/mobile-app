@@ -27,7 +27,7 @@ export const useStore = defineStore("store", {
           name: "gitlab",
           value: "https://gitlab.com/wuwencam/support/-/raw/main/xhs.json",
         },
-          {
+        {
           name: "gittee",
           value: "https://gitee.com/wuwencam/support/raw/master/xhs.json",
         },

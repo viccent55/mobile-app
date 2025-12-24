@@ -3,7 +3,7 @@ import { setConfig } from "@/utils/statistics";
 
 export function useReport() {
   const isRunning = ref(false);
-
+  const store = useStore()
   // ✅ Per-day key
   const DAY_KEY = "last_report_alive";
 

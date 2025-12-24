@@ -11,10 +11,10 @@ const config: CapacitorConfig = {
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 2500,
-      launchAutoHide: true,
+      launchShowDuration: 3000, // give cold-start time
+      launchAutoHide: false, // IMPORTANT: we hide manually when ready
       backgroundColor: "#ffffff",
-      androidScaleType: "CENTER_CROP",
+      androidScaleType: "CENTER_INSIDE", // better for logo
       showSpinner: false,
     },
     StatusBar: {

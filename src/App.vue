@@ -18,7 +18,7 @@
 
   const ready = ref(false);
   const errorMsg = ref<string | null>(null);
-  const devModeEnabled = false;
+  const devModeEnabled = true;
   const showResolverDialog = ref(true);
 
   const hasHost = computed(() => !!store.urlEndPoint);
@@ -74,7 +74,7 @@
       <StartupLoadingScreen
         v-if="!store.ads.base64 && !ready"
         :loading="loading"
-        :dev-mode-enabled="devModeEnabled"
+        :dev-mode-enabled="true"
         @open-dev-log="openResolverDialog"
       />
 
